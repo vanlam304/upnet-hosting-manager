@@ -66,6 +66,7 @@ function install_wordpress() {
   dbname=$(echo $domain | tr . _)_db
   dbuser=$(echo $domain | tr . _)_user
   dbpass=$(openssl rand -base64 12)
+  siteuser=$(echo $domain | tr . _)_usr
 
   mysql -e "CREATE DATABASE $dbname;"
   mysql -e "CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';"
@@ -73,6 +74,9 @@ function install_wordpress() {
 
   wget https://wordpress.org/latest.tar.gz -O /tmp/wp.tar.gz
   tar -xzf /tmp/wp.tar.gz -C /tmp/
+
+  adduser --disabled-password --gecos "" $siteuser
+
   mkdir -p $SITES_DIR/$domain/html
   cp -r /tmp/wordpress/* $SITES_DIR/$domain/html/
   cp $SITES_DIR/$domain/html/wp-config-sample.php $SITES_DIR/$domain/html/wp-config.php
@@ -80,20 +84,8 @@ function install_wordpress() {
   sed -i "s/database_name_here/$dbname/" $SITES_DIR/$domain/html/wp-config.php
   sed -i "s/username_here/$dbuser/" $SITES_DIR/$domain/html/wp-config.php
   sed -i "s/password_here/$dbpass/" $SITES_DIR/$domain/html/wp-config.php
-  chown -R www-data:www-data $SITES_DIR/$domain/html
 
-  echo "✅ WordPress đã cài xong tại http://$domain"
-}
-
-function add_apache_domain() {
-  read -p "Nhập domain (không http/https): " domain
-  [ -z "$domain" ] && return
-  if [ -f "$APACHE_CONF_DIR/$domain.conf" ]; then echo "❌ Domain đã tồn tại."; return; fi
-
-  mkdir -p $SITES_DIR/$domain/html
-  chown -R $USER_SYS:$USER_SYS $SITES_DIR/$domain/html
-  chmod -R 755 $SITES_DIR/$domain
-  echo "<h1>Website $domain da cai dat!</h1>" > $SITES_DIR/$domain/html/index.html
+  chown -R $siteuser:$siteuser $SITES_DIR/$domain/html
 
   cat > $APACHE_CONF_DIR/$domain.conf <<EOF
 <VirtualHost *:80>
@@ -103,6 +95,46 @@ function add_apache_domain() {
     DocumentRoot $SITES_DIR/$domain/html
     ErrorLog \${APACHE_LOG_DIR}/error.log
     CustomLog \${APACHE_LOG_DIR}/access.log combined
+    <Directory $SITES_DIR/$domain/html>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    SuexecUserGroup $siteuser $siteuser
+</VirtualHost>
+EOF
+
+  ln -s $APACHE_CONF_DIR/$domain.conf $APACHE_ENABLED_DIR/
+  apache2ctl configtest && systemctl reload apache2
+  echo "✅ WordPress đã cài xong tại http://$domain"
+}
+
+function add_apache_domain() {
+  read -p "Nhập domain (không http/https): " domain
+  [ -z "$domain" ] && return
+  if [ -f "$APACHE_CONF_DIR/$domain.conf" ]; then echo "❌ Domain đã tồn tại."; return; fi
+
+  siteuser=$(echo $domain | tr . _)_usr
+  adduser --disabled-password --gecos "" $siteuser
+  mkdir -p $SITES_DIR/$domain/html
+  chown -R $siteuser:$siteuser $SITES_DIR/$domain/html
+  chmod -R 755 $SITES_DIR/$domain
+  echo "<h1>Website $domain đã cài đặt!</h1>" > $SITES_DIR/$domain/html/index.html
+
+  cat > $APACHE_CONF_DIR/$domain.conf <<EOF
+<VirtualHost *:80>
+    ServerAdmin admin@$domain
+    ServerName $domain
+    ServerAlias www.$domain
+    DocumentRoot $SITES_DIR/$domain/html
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+    <Directory $SITES_DIR/$domain/html>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    SuexecUserGroup $siteuser $siteuser
 </VirtualHost>
 EOF
 
