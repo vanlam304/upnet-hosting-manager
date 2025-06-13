@@ -2,19 +2,32 @@
 
 # === CẤU HÌNH ===
 SITES_DIR="/var/www"
-NGINX_CONF_DIR="/etc/nginx/sites-available"
-NGINX_ENABLED_DIR="/etc/nginx/sites-enabled"
+APACHE_CONF_DIR="/etc/apache2/sites-available"
+APACHE_ENABLED_DIR="/etc/apache2/sites-enabled"
 PHPMYADMIN_PORT=8080
 USER_SYS=$(whoami)
 
-# === KIỂM TRA PHỤ THUỘC CƠ BẢN ===
-function check_lamp_lemp() {
-  echo "🔍 Kiểm tra và cài đặt LAMP hoặc LEMP nếu cần..."
+# === KIỂM TRA KẾT NỐI MẠNG ===
+ping -c1 8.8.8.8 &>/dev/null
+if [ $? -ne 0 ]; then
+  echo "❌ Không có kết nối mạng. Vui lòng kiểm tra lại kết nối internet."
+  exit 1
+fi
 
-  if ! command -v nginx >/dev/null 2>&1; then
-    echo "🌐 Cài Nginx..."
-    apt update && apt install -y nginx
-    systemctl enable nginx && systemctl start nginx
+ping -c1 google.com &>/dev/null
+if [ $? -ne 0 ]; then
+  echo "⚠️  Có vẻ DNS bị lỗi. Đang sửa tạm thời bằng cách thêm nameserver..."
+  echo -e "nameserver 8.8.8.8\nnameserver 1.1.1.1" > /etc/resolv.conf
+fi
+
+# === KIỂM TRA PHỤ THUỘC CƠ BẢN ===
+function check_lamp() {
+  echo "🔍 Kiểm tra và cài đặt LAMP nếu cần..."
+
+  if ! command -v apache2 >/dev/null 2>&1; then
+    echo "🌐 Cài Apache..."
+    apt update && apt install -y apache2
+    systemctl enable apache2 && systemctl start apache2
   fi
 
   if ! command -v mysql >/dev/null 2>&1 && ! command -v mariadb >/dev/null 2>&1; then
@@ -25,7 +38,7 @@ function check_lamp_lemp() {
 
   if ! command -v php >/dev/null 2>&1; then
     echo "⚙️  Cài PHP..."
-    apt install -y php php-fpm php-mysql
+    apt install -y php libapache2-mod-php php-mysql
   fi
 
   echo "✅ Hệ thống đã sẵn sàng."
@@ -33,18 +46,17 @@ function check_lamp_lemp() {
 
 # === HÀM ===
 function show_menu() {
-  echo "=========== VPS Hosting Manager ==========="
-  echo "1. Thêm Domain mới vào Nginx"
+  echo "=========== VPS Hosting Manager (Apache) ==========="
+  echo "1. Thêm Domain mới vào Apache"
   echo "2. Cài SSL Let's Encrypt cho domain"
   echo "3. Cài đặt WordPress tự động"
-  echo "4. Cài đặt nhiều phiên bản PHP (MultiPHP)"
-  echo "5. Backup website + database"
-  echo "6. Gia hạn SSL"
-  echo "7. Cài phpMyAdmin"
-  echo "8. Bật Firewall (ufw)"
-  echo "9. Kiểm tra trạng thái dịch vụ"
+  echo "4. Backup website + database"
+  echo "5. Gia hạn SSL"
+  echo "6. Cài phpMyAdmin"
+  echo "7. Bật Firewall (ufw)"
+  echo "8. Kiểm tra trạng thái dịch vụ"
   echo "0. Thoát"
-  echo "==========================================="
+  echo "====================================================="
   read -p "Nhập lựa chọn: " CHOICE
 }
 
@@ -73,47 +85,38 @@ function install_wordpress() {
   echo "✅ WordPress đã cài xong tại http://$domain"
 }
 
-function add_nginx_domain() {
+function add_apache_domain() {
   read -p "Nhập domain (không http/https): " domain
   [ -z "$domain" ] && return
-  if [ -f "$NGINX_CONF_DIR/$domain.conf" ]; then echo "❌ Domain đã tồn tại."; return; fi
+  if [ -f "$APACHE_CONF_DIR/$domain.conf" ]; then echo "❌ Domain đã tồn tại."; return; fi
 
   mkdir -p $SITES_DIR/$domain/html
   chown -R $USER_SYS:$USER_SYS $SITES_DIR/$domain/html
   chmod -R 755 $SITES_DIR/$domain
   echo "<h1>Website $domain da cai dat!</h1>" > $SITES_DIR/$domain/html/index.html
 
-  cat > $NGINX_CONF_DIR/$domain.conf <<EOF
-server {
-    listen 80;
-    server_name $domain www.$domain;
-    root $SITES_DIR/$domain/html;
-    index index.html index.htm;
-
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
-}
+  cat > $APACHE_CONF_DIR/$domain.conf <<EOF
+<VirtualHost *:80>
+    ServerAdmin admin@$domain
+    ServerName $domain
+    ServerAlias www.$domain
+    DocumentRoot $SITES_DIR/$domain/html
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
 EOF
 
-  ln -s $NGINX_CONF_DIR/$domain.conf $NGINX_ENABLED_DIR/
-  nginx -t && systemctl reload nginx
+  ln -s $APACHE_CONF_DIR/$domain.conf $APACHE_ENABLED_DIR/
+  apache2ctl configtest && systemctl reload apache2
   echo "✅ Domain $domain đã được thêm thành công!"
 }
 
 function install_ssl() {
   read -p "Nhập domain để cấp SSL: " domain
   [ -z "$domain" ] && return
-  apt install -y certbot python3-certbot-nginx
-  certbot --nginx -d $domain -d www.$domain --non-interactive --agree-tos -m admin@$domain
+  apt install -y certbot python3-certbot-apache
+  certbot --apache -d $domain -d www.$domain --non-interactive --agree-tos -m admin@$domain
   echo "✅ Đã cấp SSL cho $domain"
-}
-
-function install_multiphp() {
-  add-apt-repository ppa:ondrej/php -y && apt update
-  apt install -y php7.4 php7.4-fpm php8.0 php8.0-fpm php8.1 php8.1-fpm
-  systemctl enable php7.4-fpm php8.0-fpm php8.1-fpm
-  echo "✅ Đã cài các bản PHP."
 }
 
 function backup_website() {
@@ -133,20 +136,20 @@ function auto_renew_ssl() {
 function install_phpmyadmin() {
   apt install phpmyadmin -y
   ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin
-  systemctl reload nginx
+  systemctl reload apache2
   echo "✅ Truy cập phpMyAdmin tại: http://<IP>:$PHPMYADMIN_PORT/phpmyadmin"
 }
 
 function setup_firewall() {
   apt install ufw -y
   ufw allow OpenSSH
-  ufw allow 'Nginx Full'
+  ufw allow 'Apache Full'
   ufw --force enable
   echo "✅ Đã bật firewall và mở port web"
 }
 
 function check_services() {
-  for svc in nginx mysql php7.4-fpm php8.0-fpm php8.1-fpm; do
+  for svc in apache2 mysql; do
     if systemctl is-active --quiet $svc; then
       echo "$svc: OK"
     else
@@ -156,24 +159,22 @@ function check_services() {
 }
 
 # === CHẠY CHECK TRƯỚC KHI VÀO MENU ===
-check_lamp_lemp
+check_lamp
 
 # === VÒNG LẶP MENU ===
 while true; do
   show_menu
   case $CHOICE in
-    1) add_nginx_domain ;;
+    1) add_apache_domain ;;
     2) install_ssl ;;
     3) install_wordpress ;;
-    4) install_multiphp ;;
-    5) backup_website ;;
-    6) auto_renew_ssl ;;
-    7) install_phpmyadmin ;;
-    8) setup_firewall ;;
-    9) check_services ;;
+    4) backup_website ;;
+    5) auto_renew_ssl ;;
+    6) install_phpmyadmin ;;
+    7) setup_firewall ;;
+    8) check_services ;;
     0) clear; exit ;;
     *) echo "❌ Lựa chọn không hợp lệ!" ;;
   esac
   echo "Nhấn Enter để quay lại menu..."
   read
-done
