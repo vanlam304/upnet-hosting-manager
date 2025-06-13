@@ -1,1 +1,0 @@
-# upnet-hosting-manager
