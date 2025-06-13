@@ -100,7 +100,6 @@ function install_wordpress() {
         AllowOverride All
         Require all granted
     </Directory>
-    SuexecUserGroup $siteuser $siteuser
 </VirtualHost>
 EOF
 
@@ -134,7 +133,6 @@ function add_apache_domain() {
         AllowOverride All
         Require all granted
     </Directory>
-    SuexecUserGroup $siteuser $siteuser
 </VirtualHost>
 EOF
 
@@ -210,5 +208,4 @@ while true; do
   esac
   echo "Nhấn Enter để quay lại menu..."
   read
-
 done
