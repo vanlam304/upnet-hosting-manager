@@ -210,3 +210,5 @@ while true; do
   esac
   echo "Nhấn Enter để quay lại menu..."
   read
+
+done
