@@ -69,4 +69,4 @@ Backup website + MySQL lưu vào:
 ---
 
 Mọi góp ý xin gửi về: ZALO: 0964159587
-                      mail: truongvanlam304@gmail.com
+                      mail: lam.truongvan@upnet.vn
