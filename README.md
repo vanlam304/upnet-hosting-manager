@@ -12,10 +12,10 @@ Một kịch bản quản lý VPS chuyên nghiệp, được thiết kế với 
 -   🛡️ **Cách ly User tuyệt đối (PHP-FPM Pools):** Tính năng bảo mật cấp cao nhất. Mỗi website chạy dưới một user và một PHP pool riêng biệt, ngăn chặn hoàn toàn việc lây nhiễm chéo mã độc giữa các website trên cùng một server.
 -   ⚙️ **Quản lý Đa phiên bản PHP:** Cài đặt, xóa và chuyển đổi giữa nhiều phiên bản PHP (7.4, 8.x...) cho từng website một cách độc lập.
 -   🚀 **Cài đặt WordPress tự động:** Cài đặt phiên bản WordPress mới nhất chỉ trong vài giây. Tự động tạo database, user, và khắc phục triệt để các lỗi về quyền ghi file (FTP/Upgrade).
--   🤖 **Hỗ trợ n8n:** Tự động cài đặt và cấu hình n8n (Workflow Automation) với PM2 và Apache Reverse Proxy.[Đang thử nghiệm, chưa tung ra]
+-   🤖 **Hỗ trợ n8n:** Tự động cài đặt và cấu hình n8n (Workflow Automation) với PM2 và Apache Reverse Proxy.[**Đang thử nghiệm, chưa tung ra**]
 -   🔒 **SSL Miễn phí & Tự động:** Tự động cài đặt và gia hạn chứng chỉ SSL Let's Encrypt cho mọi domain, bao gồm cả chuyển hướng HTTPS.
--   📦 **Backup & Restore:** Sao lưu và phục hồi toàn bộ mã nguồn và database của website chỉ với một lệnh.[Đang thử nghiệm, chưa tung ra]
--   🔔 **Giám sát Chủ động:** Tùy chọn cài đặt hệ thống giám sát CPU, RAM, Disk và nhận cảnh báo tức thời qua email.
+-   📦 **Backup & Restore:** Sao lưu và phục hồi toàn bộ mã nguồn và database của website chỉ với một lệnh.
+-   🔔 **Giám sát Chủ động:** Tùy chọn cài đặt hệ thống giám sát CPU, RAM, Disk và nhận cảnh báo tức thời qua email.[**Đang thử nghiệm, chưa tung ra**]
 -   🧰 **Bộ công cụ Quản trị:** Tích hợp cài đặt phpMyAdmin bảo mật, quản lý Firewall (UFW) và kiểm tra trạng thái các dịch vụ.
 
 ## 🛡️ Kiến trúc Bảo mật
