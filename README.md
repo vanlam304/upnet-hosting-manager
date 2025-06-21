@@ -27,8 +27,7 @@ sudo apt update && sudo apt install -y bash wget curl
 ### Bước 2: Tải và chạy script
 
 ```bash
-wget https://raw.githubusercontent.com/vanlam304/upnet-hosting-manager/main/install.sh -O install.sh
-bash install.sh
+wget https://raw.githubusercontent.com/vanlam304/upnet-hosting-manager/main/install.sh -O install.sh && sudo bash install.sh
 ```
 
 ## 🧩 Giao diện Menu
@@ -67,5 +66,7 @@ Backup website + MySQL lưu vào:
 
 ---
 
-Mọi góp ý xin gửi về: [vanlam304](https://github.com/vanlam304)
+Mọi góp ý xin gửi về:
+- **Zalo:** 0964159587
+- **Mail:** truongvanlam304@gmail.com
 
