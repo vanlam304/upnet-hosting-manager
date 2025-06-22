@@ -57,7 +57,14 @@ sudo upnet
 Một menu tương tác sẽ hiện ra để bạn bắt đầu quản lý server của mình.
 
 ---
+## 💥 Gỡ bỏ (Uninstall)
+Nếu bạn muốn xóa sạch hoàn toàn mọi thứ mà Upnet Hosting Manager đã cài đặt, hãy chạy lệnh sau.
 
+**⚠️ CẢNH BÁO:** Lệnh này sẽ **xóa vĩnh viễn** tất cả các website, database, user, và các gói phần mềm liên quan. Hãy sao lưu dữ liệu quan trọng trước khi thực hiện.
+
+```bash
+wget https://raw.githubusercontent.com/vanlam304/upnet-hosting-manager/main/uninstall.sh -O uninstall.sh && sudo bash uninstall.sh
+```
 Mọi góp ý và hỗ trợ, vui lòng liên hệ:
 - **Zalo:** 0964159587
 - **Mail:** truongvanlam304@gmail.com
